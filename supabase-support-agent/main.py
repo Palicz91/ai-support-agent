@@ -47,8 +47,8 @@ gemini = GeminiService(GEMINI_API_KEY, db)
 # =========================================================
 
 
-async def send_telegram_message(chat_id: int, text: str, parse_mode: str = "Markdown"):
-    """Send a message via Telegram Bot API with auto-chunking and markdown fallback."""
+async def send_telegram_message(chat_id: int, text: str, parse_mode: str = "HTML"):
+    """Send a message via Telegram Bot API with auto-chunking and plain text fallback."""
     chunks = _split_message(text, 4000)
     async with httpx.AsyncClient() as client:
         for chunk in chunks:
