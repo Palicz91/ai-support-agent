@@ -179,6 +179,22 @@ If none of the predefined tools can answer a question, the bot generates a read-
 | `SUPABASE_URL` | Supabase project URL (https://xxx.supabase.co) |
 | `SUPABASE_SERVICE_KEY` | Supabase service_role key |
 
+## Lessons from production
+
+Things we learned deploying this at SpiniX that will save you time:
+
+**Telegram Markdown is fragile.** Gemini generates Markdown that Telegram's API rejects (400 Bad Request). We switched to HTML parse_mode with a plain-text fallback. The system prompt also tells the AI to avoid Markdown.
+
+**The AI will query the wrong table.** If you have `customers` (200 rows) and `subscriptions` (30 active), asking "how many subscribers?" will return 200 unless you explicitly map questions to tables in the system prompt. Add a "which table answers which question" section.
+
+**System prompt > code changes.** 80% of our "bugs" were fixed by editing the system prompt, not the code. Invest time in writing precise metric definitions and table mappings.
+
+**The error_codes table is the highest-value feature.** Once populated, the bot instantly answers "what does ERR_AUTH_012 mean?" with the exact cause and fix. We used a separate Claude chat with a custom system prompt to extract error codes from our backend code and generate SQL INSERTs.
+
+**Gemini 2.5 Pro vs Flash.** Pro gives noticeably better multi-step reasoning (looking up a customer, then their projects, then their stats). Flash is 4x cheaper and fine for simple lookups. We use Pro ($0.01/query) because GCP credits cover it.
+
+**Start with predefined queries.** We tried dynamic SQL first but it's slow and unpredictable. Predefined tools cover 90% of questions. Dynamic SQL is a good fallback, not a primary approach.
+
 ## Cost
 
 With Google Cloud credits: **$0/month**. Without credits:
